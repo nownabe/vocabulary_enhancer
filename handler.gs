@@ -17,6 +17,7 @@ function doGet(e) {
 
 function doPost(e) {
   try {
+    log(JSON.stringify(e))
     const events = JSON.parse(e.postData.contents).events;
 
     for (const event of events) {
@@ -29,9 +30,19 @@ function doPost(e) {
 }
 
 function handleEvent(event) {
-  if (event.type === "follow") { return; }
+  if (event.type === "follow") { 
+    register(event);
+    return;
+  }
 
   addWord(event);
+}
+
+function register(event) {
+  const userId = event.source.userId;
+
+  const metadataSheet = ss.getSheetByName("Metadata");
+  metadataSheet.getRange(1, 2).setValue(userId);
 }
 
 function addWord(event) {
@@ -51,6 +62,13 @@ function addWord(event) {
 
   reply(event.replyToken, "単語を追加しました");
 }
+
+
+/*
+  Push
+*/
+
+
 
 
 /*
@@ -111,5 +129,5 @@ function log(msg) {
   if (!logSheet) {
     logSheet = ss.getSheetByName("Log");
   }
-  logSheet.getRange(sheet.getLastRow() + 1, 1).setValue(msg);
+  logSheet.getRange(logSheet.getLastRow() + 1, 1).setValue(msg);
 }
