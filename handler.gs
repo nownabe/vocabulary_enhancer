@@ -2,8 +2,10 @@
 
 const ss = SpreadsheetApp.getActiveSpreadsheet();
 const config = ss.getSheetByName("Config");
-const vocabulary = ss.getSheetByName("Vocabulary");
+const vocabularySheet = ss.getSheetByName("Vocabulary");
 let logSheet;
+
+const vocabulary = getVocabulary();
 
 /*
   HTTP Handlers
@@ -38,9 +40,14 @@ function addWord(event) {
     return;
   }
 
-  const row = vocabulary.getLastRow() + 1;
-  vocabulary.getRange(row, 1).setValue(word);
-  vocabulary.getRange(row, 2).setValue(description);
+  if (existVocabulary(word)) {
+    reply(event.replyToken, `"${word}" は既に登録されています`);
+    return;
+  }
+
+  const row = vocabularySheet.getLastRow() + 1;
+  vocabularySheet.getRange(row, 1).setValue(word);
+  vocabularySheet.getRange(row, 2).setValue(description);
 
   reply(event.replyToken, "単語を追加しました");
 }
@@ -82,8 +89,23 @@ function reply(replyToken, message) {
 
 
 /*
+  Vocabulary
+*/
+
+function getVocabulary() {
+  const rows = vocabularySheet.getLastRow() - 1;
+  return vocabularySheet.getRange(2, 1, rows, 4).getValues();
+}
+
+function existVocabulary(word) {
+  return vocabulary.some((vocab) => vocab[0] === word);
+}
+
+
+/*
   Utility functions
 */
+
 
 function log(msg) {
   if (!logSheet) {
