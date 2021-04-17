@@ -2,6 +2,7 @@
 
 const ss = SpreadsheetApp.getActiveSpreadsheet();
 const config = ss.getSheetByName("Config");
+const vocabulary = ss.getSheetByName("Vocabulary");
 
 /*
   HTTP Handlers
@@ -13,13 +14,11 @@ function doGet(e) {
 
 function doPost(e) {
   try {
-  const events = JSON.parse(e.postData.contents).events;
+    const events = JSON.parse(e.postData.contents).events;
 
-  for (const event of events) {
-    handleEvent(event);
-  }
-
-
+    for (const event of events) {
+      handleEvent(event);
+    }
   } catch (e) {
     log(e);
   }
@@ -28,8 +27,21 @@ function doPost(e) {
 
 function handleEvent(event) {
   if (event.type === "follow") { return; }
-  
-  reply(event.replyToken, `${event.message.text}!!`);
+
+  addWord(event);
+}
+
+function addWord(event) {
+  const [word, description] = event.message.text.split("\n");
+  if (!word || !description) {
+    return;
+  }
+
+  const row = vocabulary.getLastRow() + 1;
+  vocabulary.getRange(row, 1).setValue(word);
+  vocabulary.getRange(row, 2).setValue(description);
+
+  reply(event.replyToken, "単語を追加しました");
 }
 
 
