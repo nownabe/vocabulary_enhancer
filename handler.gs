@@ -3,6 +3,7 @@
 const ss = SpreadsheetApp.getActiveSpreadsheet();
 const config = ss.getSheetByName("Config");
 const vocabulary = ss.getSheetByName("Vocabulary");
+let logSheet;
 
 /*
   HTTP Handlers
@@ -85,6 +86,8 @@ function reply(replyToken, message) {
 */
 
 function log(msg) {
-  const sheet = ss.getSheetByName("Log");
-  sheet.getRange(sheet.getLastRow() + 1, 1).setValue(msg);
+  if (!logSheet) {
+    logSheet = ss.getSheetByName("Log");
+  }
+  logSheet.getRange(sheet.getLastRow() + 1, 1).setValue(msg);
 }
