@@ -1,11 +1,13 @@
 /* Global Variables */
 
 const ss = SpreadsheetApp.getActiveSpreadsheet();
-const config = ss.getSheetByName("Config");
+const configSheet = ss.getSheetByName("Config");
 const vocabularySheet = ss.getSheetByName("Vocabulary");
 let logSheet;
 
+const config = Object.fromEntries(configSheet.getRange(1, 1, configSheet.getLastRow(), 2).getValues());
 const vocabulary = getVocabulary();
+
 
 /*
   HTTP Handlers
@@ -77,16 +79,14 @@ function addWord(event) {
   https://developers.line.biz/en/reference/messaging-api
 */
 
-const REPLY_URL = "https://api.line.me/v2/bot/message/reply"
-
-const accessToken = config.getRange(1, 2).getValue();
+const REPLY_URL = "https://api.line.me/v2/bot/message/reply";
 
 function reply(replyToken, message) {
   try {
     const response = UrlFetchApp.fetch(REPLY_URL, {
       headers: {
         "Content-Type": "application/json; charset=utf-8",
-        Authorization: `Bearer ${accessToken}`,
+        Authorization: `Bearer ${config.accessToken}`,
       },
       method: "post",
       payload: JSON.stringify({
@@ -123,7 +123,6 @@ function existVocabulary(word) {
 /*
   Utility functions
 */
-
 
 function log(msg) {
   if (!logSheet) {
