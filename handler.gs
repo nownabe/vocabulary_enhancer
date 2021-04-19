@@ -37,7 +37,15 @@ function handleEvent(event) {
     return;
   }
 
-  addWord(event);
+  if (event.message.text.match(/^start$/)) {
+    // reply(event.replyToken, makeQuizMessage());
+  } else if (event.message.text.match(/^certain/)) {
+    // certain(event);
+  } else if (event.message.text.match(/^uncertain/)) {
+    // uncertain(event);
+  } else {
+    addWord(event);
+  }
 }
 
 function register(event) {
@@ -61,16 +69,14 @@ function addWord(event) {
   const row = vocabularySheet.getLastRow() + 1;
   vocabularySheet.getRange(row, 1).setValue(word);
   vocabularySheet.getRange(row, 2).setValue(description);
+  
+  const messages = [{
+    type: "text",
+    text: "単語を追加しました",
+  }];
 
-  reply(event.replyToken, "単語を追加しました");
+  reply(event.replyToken, messages);
 }
-
-
-/*
-  Push
-*/
-
-
 
 
 /*
@@ -81,7 +87,7 @@ function addWord(event) {
 
 const REPLY_URL = "https://api.line.me/v2/bot/message/reply";
 
-function reply(replyToken, message) {
+function reply(replyToken, messages) {
   try {
     const response = UrlFetchApp.fetch(REPLY_URL, {
       headers: {
@@ -90,11 +96,8 @@ function reply(replyToken, message) {
       },
       method: "post",
       payload: JSON.stringify({
-        replyToken: replyToken,
-        messages: [{
-          type: "text",
-          text: message,
-        }],
+        replyToken,
+        messages,
       }),
     });
     response.getResponseCode
