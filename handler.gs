@@ -37,15 +37,81 @@ function handleEvent(event) {
     return;
   }
 
-  if (event.message.text.match(/^start$/)) {
-    // reply(event.replyToken, makeQuizMessage());
-  } else if (event.message.text.match(/^certain/)) {
-    // certain(event);
-  } else if (event.message.text.match(/^uncertain/)) {
-    // uncertain(event);
+  if (event.message.text.match(/^(start|開始|スタート)$/)) {
+    reply(event.replyToken, [makeQuizMessage()]);
+  } else if (event.message.text.match(/^certain: /)) {
+    certain(event);
+  } else if (event.message.text.match(/^uncertain: /)) {
+    uncertain(event);
   } else {
     addWord(event);
   }
+}
+
+function certain(event) {
+  const [_, word] = /^certain: (.+)$/.exec(event.message.text);
+  updateVocabulary(word, true);
+  const index = findVocabularyIndex(word);
+
+  const messages = [{ type: "text", text: `正解は「${vocabulary[index][1]}」でした`}];
+
+  const quizMessage = makeQuizMessage(word);
+  if (quizMessage) {
+    messages.push(quizMessage);
+  } else {
+    messages.push({ type: "text", text: "本日の復習は以上です"})
+  }
+
+  reply(event.replyToken, messages);
+}
+
+function uncertain(event) {
+  const [_, word] = /^uncertain: (.+)$/.exec(event.message.text);
+  updateVocabulary(word, false);
+  const index = findVocabularyIndex(word);
+
+  const messages = [{ type: "text", text: `正解は「${vocabulary[index][1]}」でした`}];
+
+  const quizMessage = makeQuizMessage(word);
+    if (quizMessage) {
+    messages.push(quizMessage);
+  } else {
+    messages.push({ type: "text", text: "本日の復習は以上です"})
+  }
+
+  reply(event.replyToken, messages);
+}
+
+function makeQuizMessage(skipWord = null) {
+  const vocab = getNextWord(skipWord);
+
+  if (vocab === null) {
+    return { type: "text", text: "本日復習できる単語はありません"};
+  } else {
+    const [word, description, count, lastSolved] = vocab;
+
+    return {
+      type: "template",
+      altText: "単語クイズ",
+      template: {
+        type: "buttons",
+        title: word,
+        text: `連続性回数:${count}\n前回回答:${lastSolved}`,
+        actions: [
+          {
+            type: "message",
+            label: "わかる",
+            text: `certain: ${word}`,
+          },
+          {
+            type: "message",
+            label: "自信ない",
+            text: `uncertain: ${word}`
+          }
+        ]
+      }
+    }
+  };
 }
 
 function register(event) {
@@ -120,6 +186,55 @@ function getVocabulary() {
 
 function existVocabulary(word) {
   return vocabulary.some((vocab) => vocab[0] === word);
+}
+
+function findVocabularyIndex(word) {
+  return vocabulary.findIndex((vocab) => vocab[0] === word);
+}
+
+function updateVocabulary(word, correct) {
+  const row = findVocabularyIndex(word) + 2;
+
+  if (correct) {
+    const count = parseInt(vocabularySheet.getRange(row, 3).getValue() || "0");
+    vocabularySheet.getRange(row, 3).setValue(count + 1);
+    vocabularySheet.getRange(row, 4).setValue(new Date().toISOString());
+  } else {
+    vocabularySheet.getRange(row, 3).setValue(0);
+    vocabularySheet.getRange(row, 4).setValue(new Date().toISOString());
+  }
+}
+
+const daysToRepeat = [1, 3, 7, 14, 28, 56, 84];
+
+function getNextWord(skipWord = null) {
+  const now = new Date();
+
+  for (const vocab of vocabulary) {
+    if (vocab[0] === skipWord) { continue; }
+
+    const count = parseInt(vocab[2] || "0");
+    const lastSolved = Date.parse(vocab[3]);
+    const diffDays = (now - lastSolved) / 86400000; // 1000 * 60 * 60 * 24;
+
+    if (diffDays < 1) { continue; }
+
+    if (count === 0 && (!lastSolved || diffDays >= 1)) {
+      return vocab;
+    }
+
+    for (let i = 0; i < daysToRepeat.length; i++) {
+      if (count === i + 1 && diffDays >= daysToRepeat[i]) {
+        return vocab;
+      }
+    }
+
+    if (count > daysToRepeat.length && diffDays >= daysToRepeat[daysToRepeat.length - 1]) {
+      return vocab;
+    }
+  }
+
+  return null;
 }
 
 
