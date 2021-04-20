@@ -96,7 +96,7 @@ function makeQuizMessage(skipWord = null) {
       template: {
         type: "buttons",
         title: word,
-        text: `連続性回数:${count}\n前回回答:${lastSolved}`,
+        text: `連続正解数:${count}\n前回回答日:${lastSolved}`,
         actions: [
           {
             type: "message",
