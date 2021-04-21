@@ -209,17 +209,22 @@ const daysToRepeat = [1, 3, 7, 14, 28, 56, 84];
 
 function getNextWord(skipWord = null) {
   const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
   for (const vocab of vocabulary) {
     if (vocab[0] === skipWord) { continue; }
 
     const count = parseInt(vocab[2] || "0");
-    const lastSolved = Date.parse(vocab[3]);
-    const diffDays = (now - lastSolved) / 86400000; // 1000 * 60 * 60 * 24;
+
+    if (!vocab[3]) { return vocab; }
+
+    const lastSolvedAt = new Date(vocab[3]);
+    const lastSolvedOn = new Date(lastSolvedAt.getFullYear(), lastSolvedAt.getMonth(), lastSolvedAt.getDate());
+    const diffDays = (today - lastSolvedOn) / 86400000; // 1000 * 60 * 60 * 24;
 
     if (diffDays < 1) { continue; }
 
-    if (count === 0 && (!lastSolved || diffDays >= 1)) {
+    if (count === 0 && (!lastSolvedOn || diffDays >= 1)) {
       return vocab;
     }
 
