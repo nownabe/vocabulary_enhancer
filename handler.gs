@@ -90,13 +90,16 @@ function makeQuizMessage(skipWord = null) {
   } else {
     const [word, description, count, lastSolved] = vocab;
 
+    const date = new Date(lastSolved);
+    const dateString = `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}`
+
     return {
       type: "template",
       altText: "単語クイズ",
       template: {
         type: "buttons",
         title: word,
-        text: `連続正解数:${count}\n前回回答日:${lastSolved}`,
+        text: `連続正解数:${count}\n最終回答日:${dateString}`,
         actions: [
           {
             type: "message",
